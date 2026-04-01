@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Neighbourhood Help</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f7fa;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-btn {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .vote-btn {
+      background: #2196F3;
+      color: white;
+    }
+
+    .delete-btn {
+      background: #f44336;
+      color: white;
+    }
+
+    .status-btn {
+      background: orange;
+      color: white;
+    }
+
+    .card {
+      background: #fff;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    .high { color: red; }
+    .medium { color: orange; }
+    .low { color: green; }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Repair Request</h1>
+
+  <input id="title" placeholder="Problem">
+  <input id="location" placeholder="Location">
+  <input id="urgency" placeholder="Urgency (low/medium/high)">
+  
+  <button class="add-btn" onclick="addRequest()">Add Request</button>
+
+  <h2>All Requests</h2>
+  <div id="list"></div>
+</div>
+
+<script>
+const API = "http://localhost:5000";
+
+async function load() {
+  const res = await fetch(API + "/requests");
+  const data = await res.json();
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(item => {
+    list.innerHTML += `
+      <div class="card">
+        <b>${item.title}</b> (${item.location}) - 
+        <span class="${item.urgency}">${item.urgency}</span><br>
+        Status: ${item.status} <br>
+        Votes: ${item.votes} <br>
+
+        <button class="vote-btn" onclick="vote('${item._id}')">👍 Vote</button>
+        <button class="status-btn" onclick="toggleStatus('${item._id}')">Change Status</button>
+        <button class="delete-btn" onclick="deleteReq('${item._id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+async function addRequest() {
+  const title = document.getElementById("title").value;
+  const location = document.getElementById("location").value;
+  const urgency = document.getElementById("urgency").value;
+
+  await fetch(API + "/requests", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, location, urgency })
+  });
+
+  load();
+}
+
+async function vote(id) {
+  await fetch(API + "/vote/" + id, { method: "PUT" });
+  load();
+}
+
+async function deleteReq(id) {
+  await fetch(API + "/delete/" + id, { method: "DELETE" });
+  load();
+}
+
+async function toggleStatus(id) {
+  await fetch(API + "/status/" + id, { method: "PUT" });
+  load();
+}
+
+load();
+</script>
+
+</body>
+</html>
